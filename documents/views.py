@@ -12,15 +12,6 @@ from .serializers import (
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
-    """
-    مدیریت اسناد:
-    - list: لیست اسناد
-    - create: ساخت سند جدید (با فایل docx یا متن)
-    - retrieve: جزئیات سند + chunkها
-    - update/partial_update: ویرایش
-    - destroy: حذف
-    - process: پردازش سند (chunking + embedding)
-    """
     
     queryset = Document.objects.all().order_by('-created_at')
     parser_classes = [MultiPartParser, FormParser, JSONParser]
@@ -32,7 +23,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'], url_path='process')
     def process(self, request, pk=None):
-        """پردازش یک سند: chunking + embedding + ذخیره در Qdrant."""
         document = self.get_object()
         try:
             n = document.process()
@@ -49,9 +39,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
 
 class DocumentChunkViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    مشاهده تکه‌های سند (فقط خواندنی).
-    """
     queryset = DocumentChunk.objects.select_related('document').all()
     serializer_class = DocumentChunkSerializer
     

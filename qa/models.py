@@ -48,10 +48,6 @@ class Question(models.Model):
         return self.text[:50]
 
     def ask(self, k: int = 4):
-        """
-        این سوال رو از سرویس RAG می‌پرسه و پاسخ رو ذخیره می‌کنه.
-        اگه self.document ست شده باشه، فقط توی همون سند جستجو می‌شه.
-        """
         from .services import answer_question
         from documents.models import DocumentChunk
         
@@ -59,7 +55,6 @@ class Question(models.Model):
         self.save(update_fields=['status'])
         
         try:
-            # اگه سند انتخاب شده، فقط توی همون سند جستجو کن
             document_id = self.document_id if self.document_id else None
             
             result = answer_question(self.text, k=k, document_id=document_id)

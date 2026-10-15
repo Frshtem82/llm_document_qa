@@ -1,4 +1,3 @@
-"""مدیریت embedding و Qdrant vector store برای بازیابی معنایی."""
 from typing import Optional
 from django.conf import settings
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -10,7 +9,6 @@ from qdrant_client.models import Distance, VectorParams, Filter, FieldCondition,
 
 COLLECTION_NAME = settings.QDRANT_COLLECTION
 
-# LaBSE: 768 بعد
 VECTOR_SIZE = 768
 
 _embeddings_model: Optional[HuggingFaceEmbeddings] = None

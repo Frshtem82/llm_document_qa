@@ -1,4 +1,3 @@
-"""سرویس پرسش و پاسخ مبتنی بر RAG با LangChain و OpenRouter."""
 import os
 from typing import Optional
 

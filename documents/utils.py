@@ -1,4 +1,3 @@
-"""توابع کمکی برای پردازش اسناد متنی و فایل‌های docx."""
 from docx import Document as DocxDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

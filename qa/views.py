@@ -9,14 +9,6 @@ from .serializers import QuestionSerializer, AskQuestionSerializer
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
-    """
-    مدیریت پرسش‌ها:
-    - list: تاریخچه پرسش‌ها
-    - retrieve: جزئیات یک پرسش
-    - destroy: حذف پرسش
-    - ask: پرسیدن یک پرسش جدید (تولید پاسخ با LLM)
-    """
-    
     queryset = Question.objects.all().order_by('-created_at')
     serializer_class = QuestionSerializer
     
@@ -29,20 +21,10 @@ class QuestionViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='ask')
     def ask(self, request):
-        """
-        یک پرسش جدید ثبت کن و پاسخ رو با LLM تولید کن.
-        
-        ورودی:
-            - text (اجباری): متن پرسش
-            - k (اختیاری): تعداد chunkهای بازیابی (پیش‌فرض 4)
-            - document_id (اختیاری): محدود کردن جستجو به یک سند
-            - save (اختیاری): ذخیره در تاریخچه (پیش‌فرض true)
-        """
         serializer = AskQuestionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        
-        # ساخت آبجکت Question
+
         question = Question(
             text=data['text'],
             document_id=data.get('document_id')
@@ -95,9 +77,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
 
 class SearchView(APIView):
-    """
-    جستجوی معنایی مستقیم در اسناد (بدون LLM).
-    """
     permission_classes = [AllowAny]
     
     def get(self, request):

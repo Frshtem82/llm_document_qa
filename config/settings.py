@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # ============================================================
-# امنیت
+# Security
 # ============================================================
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-me')
@@ -35,7 +35,7 @@ ALLOWED_HOSTS = os.getenv(
 
 
 # ============================================================
-# اپلیکیشن‌ها
+# Applications
 # ============================================================
 
 INSTALLED_APPS = [
@@ -88,7 +88,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # ============================================================
-# دیتابیس (PostgreSQL در Docker)
+# Database (PostgreSQL in Docker)
 # ============================================================
 
 DATABASES = {
@@ -97,14 +97,14 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'llm_project'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DB_HOST', 'db'),       # ← 'db' برای Docker
+        'HOST': os.getenv('DB_HOST', 'db'),       # 'db' for Docker
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
 
 # ============================================================
-# اعتبارسنجی رمز عبور
+# Password validation
 # ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -124,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # ============================================================
-# بین‌المللی‌سازی
+# Internationalization
 # ============================================================
 
 LANGUAGE_CODE = 'fa-ir'
@@ -134,7 +134,7 @@ USE_TZ = True
 
 
 # ============================================================
-# فایل‌های استاتیک و مدیا
+# Static and media files
 # ============================================================
 
 STATIC_URL = '/static/'
@@ -147,7 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # ============================================================
-# ایمیل (فقط برای توسعه)
+# Email (development only)
 # ============================================================
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -172,7 +172,7 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'LLM Document QA API',
-    'DESCRIPTION': 'سامانه پرسش از اسناد با استفاده از مدل زبانی',
+    'DESCRIPTION': 'Document question-answering system powered by a language model',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
@@ -182,34 +182,21 @@ SPECTACULAR_SETTINGS = {
 # Qdrant (Vector Store)
 # ============================================================
 
-QDRANT_HOST = os.getenv('QDRANT_HOST', 'qdrant')     # ← 'qdrant' برای Docker
+QDRANT_HOST = os.getenv('QDRANT_HOST', 'qdrant')     # 'qdrant' for Docker
 QDRANT_PORT = int(os.getenv('QDRANT_PORT', '6333'))
 QDRANT_COLLECTION = os.getenv('QDRANT_COLLECTION', 'document_chunks')
 
 
 # ============================================================
-# HuggingFace (مدل Embedding و LLM)
-# ============================================================
-
-HF_TOKEN = os.getenv('HF_TOKEN', '')
-HF_MODEL_ID = os.getenv('HF_MODEL_ID', 'Qwen/Qwen2.5-7B-Instruct')
-
-
-# ============================================================
-# OpenRouter 
+# OpenRouter
 # ============================================================
 
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
 OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL', 'meta-llama/llama-3.1-8b-instruct:free')
 OPENROUTER_BASE_URL = os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
 
-
-# Ollama (LLM محلی)
-OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://ollama:11434')
-OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'qwen2.5:1.5b')
-
 # ============================================================
-# CSRF (برای فرم‌های ادمین)
+# CSRF (for admin forms)
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [

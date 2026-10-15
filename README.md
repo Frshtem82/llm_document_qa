@@ -23,10 +23,10 @@ A document question-answering system powered by a language model. Users upload d
 ## Features
 
 - ✅ Document management (add, edit, delete) via API or Django Admin
-- ✅ Support for `.docx` files and raw text (including Word tables)
+- ✅ Support for `.docx` files (including Word tables)
 - ✅ Automatic text extraction and storage
 - ✅ Semantic chunking with LangChain
-- ✅ Multilingual embeddings (Persian, English, and 50+ languages)
+- ✅ Multilingual embeddings with LaBSE (Persian, English, and 50+ languages)
 - ✅ Vector storage in Qdrant
 - ✅ Fast semantic search
 - ✅ RAG-based answers grounded in document content
@@ -60,14 +60,13 @@ A document question-answering system powered by a language model. Users upload d
       ┌────────────┐              ┌────────────┐
       │ PostgreSQL │              │   Qdrant   │
       │ (Metadata) │              │ (Vectors)  │
-      └────────────┘              └─────┬──────┘
-                                        │
-                          ┌─────────────┴─────────────┐
-                          ▼                           ▼
-                   ┌─────────────┐            ┌─────────────┐
-                   │ HuggingFace │            │     LLM     │
-                   │ Embeddings  │            │ (HF/Ollama) │
-                   └─────────────┘            └─────────────┘
+      └────────────┘              └────────────┘
+                                          │
+                                          ▼
+                                   ┌─────────────┐
+                                   │  OpenRouter │
+                                   │    (LLM)    │
+                                   └─────────────┘
 ```
 
 | Component | Purpose |
@@ -75,8 +74,8 @@ A document question-answering system powered by a language model. Users upload d
 | **Django + DRF** | Web framework, ORM, API, Admin Panel |
 | **PostgreSQL** | Stores document, chunk, and question metadata |
 | **Qdrant** | Vector database for semantic search |
-| **HuggingFace** | Multilingual embedding model (local, offline) |
-| **LLM** | Answer generation (HuggingFace Inference or Ollama) |
+| **LaBSE** | Multilingual embedding model (local, offline, 768-dim) |
+| **OpenRouter** | LLM API for answer generation |
 | **LangChain** | RAG pipeline orchestration |
 
 ---
@@ -85,9 +84,9 @@ A document question-answering system powered by a language model. Users upload d
 
 - **Docker** version 20+
 - **Docker Compose** version 2+ (bundled with Docker Desktop)
-- **HuggingFace Access Token** (free) — [get one here](https://huggingface.co/settings/tokens)
+- **OpenRouter API Key** (free) — [get one here](https://openrouter.ai/keys)
 - Minimum **8 GB RAM** (16 GB recommended)
-- **10 GB free disk space** (for Docker images and HuggingFace models)
+- **10 GB free disk space** (for Docker images and the LaBSE model)
 
 > No need to install Python, PostgreSQL, or Qdrant on your host machine. Everything runs inside Docker.
 
@@ -130,9 +129,10 @@ QDRANT_HOST=qdrant
 QDRANT_PORT=6333
 QDRANT_COLLECTION=document_chunks
 
-# HuggingFace (LLM + Embeddings)
-HF_TOKEN=hf_your_token_here
-HF_MODEL_ID=HuggingFaceH4/zephyr-7b-beta
+# OpenRouter (LLM)
+OPENROUTER_API_KEY=sk-or-v1-your_key_here
+OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 ```
 
 > ⚠️ **Important:** `.env` contains secrets. Never commit it to Git.
@@ -198,8 +198,9 @@ Enter username, email, and password.
 | `QDRANT_HOST` | Qdrant hostname | `qdrant` | No |
 | `QDRANT_PORT` | Qdrant port | `6333` | No |
 | `QDRANT_COLLECTION` | Qdrant collection name | `document_chunks` | No |
-| `HF_TOKEN` | HuggingFace token | — | **Yes** |
-| `HF_MODEL_ID` | LLM model | `HuggingFaceH4/zephyr-7b-beta` | No |
+| `OPENROUTER_API_KEY` | OpenRouter API key | — | **Yes** |
+| `OPENROUTER_MODEL` | LLM model name | `meta-llama/llama-3.3-70b-instruct:free` | No |
+| `OPENROUTER_BASE_URL` | OpenRouter base URL | `https://openrouter.ai/api/v1` | No |
 
 ---
 
@@ -223,7 +224,7 @@ Enter username, email, and password.
 After saving:
 - Django automatically extracts text from the file
 - The "Full text" field is populated
-- `is_processed` is still `False` (not yet processed)
+- `is_processed` is still `False`
 
 ### Step 3: Process the Document (chunking + embedding)
 
@@ -233,10 +234,10 @@ After saving:
 
 Behind the scenes:
 - Text is split into ~500-character chunks
-- Each chunk is converted to a 768-dim vector (LaBSE)
+- Each chunk is converted to a 768-dim vector using **LaBSE**
 - Vectors are stored in Qdrant
 
-> ⚠️ **First time:** The HuggingFace model (~1.8 GB) will be downloaded. It is cached in the `hf_cache` volume, so subsequent runs are fast.
+> ⚠️ **First time:** The LaBSE model (~1.8 GB) will be downloaded and cached in the `hf_cache` volume. Subsequent runs are fast.
 
 After processing:
 - `is_processed` = `True`
@@ -258,9 +259,9 @@ After processing:
 7. Click **Go**
 
 Behind the scenes:
-1. The question is embedded
+1. The question is embedded with LaBSE
 2. Qdrant finds the closest chunks (filtered by document if selected)
-3. Chunks are sent to the LLM
+3. Chunks are sent to OpenRouter
 4. The LLM generates an answer
 5. Answer + sources are stored
 
@@ -271,10 +272,7 @@ After completion:
 
 ### Step 5: View History
 
-All questions and answers are stored at `http://localhost:8000/admin/qa/question/`. You can:
-- Filter by document
-- Filter by status
-- Search in question and answer text
+All questions and answers are stored at `http://localhost:8000/admin/qa/question/`. You can filter by document, status, or search in text.
 
 ---
 
@@ -409,7 +407,7 @@ llm_document_qa/
 │   ├── urls.py                      # Router
 │   ├── admin.py                     # Django admin
 │   ├── utils.py                     # Text extraction + chunking
-│   └── embeddings.py                # Qdrant + HuggingFace
+│   └── embeddings.py                # Qdrant + LaBSE
 │
 ├── qa/                              # Question-Answering app
 │   ├── models.py                    # Question
@@ -417,7 +415,7 @@ llm_document_qa/
 │   ├── views.py                     # QuestionViewSet, SearchView
 │   ├── urls.py                      # Router
 │   ├── admin.py                     # Django admin
-│   └── services.py                  # RAG chain + LLM
+│   └── services.py                  # RAG chain + OpenRouter LLM
 │
 ├── sample_data/                     # Sample documents
 ├── docs/                            # Screenshots and docs
@@ -441,7 +439,7 @@ Django Admin is production-ready, DRF provides clean REST APIs, mature ecosystem
 Qdrant is a standalone service with native metadata filtering, better concurrency, and excellent Docker integration.
 
 ### Why LaBSE for embeddings?
-Free, offline, multilingual (Persian, English, 50+ languages), and good quality for RAG.
+Free, offline, multilingual (Persian, English, 50+ languages), 768-dim, and good quality for RAG.
 
 ### Why RAG instead of fine-tuning?
 No training data needed, always up-to-date, source attribution, lower cost, instant updates.
@@ -451,6 +449,9 @@ Optimal for embedding models, large enough for meaningful context, small for pre
 
 ### Why cosine similarity?
 The embedding model normalizes vectors; for normalized vectors, cosine distance is fast and reliable.
+
+### Why OpenRouter?
+Single API for many LLMs (Llama, Mistral, Qwen, ...), OpenAI-compatible, easy model switching via env var.
 
 ---
 
@@ -526,7 +527,7 @@ docker-compose build --no-cache web
 docker-compose up -d
 ```
 
-### HuggingFace model re-downloads every time
+### LaBSE model re-downloads every time
 
 The `hf_cache` volume is missing. Check `docker-compose.yml`:
 
@@ -534,18 +535,6 @@ The `hf_cache` volume is missing. Check `docker-compose.yml`:
 volumes:
   - hf_cache:/root/.cache/huggingface
 ```
-
-### `model_not_supported` from HuggingFace
-
-The model is not available on Inference API. Use another model:
-
-```env
-HF_MODEL_ID=HuggingFaceH4/zephyr-7b-beta
-```
-
-### `429 Too Many Requests`
-
-Daily quota exceeded. Wait 24 hours or switch models.
 
 ### First build is very slow
 
@@ -568,7 +557,7 @@ docker volume prune
 
 - **No authentication** — API is open. Add JWT for production
 - **No rate limiting**
-- **Free model quotas** — daily limits
+- **Free model quotas** — OpenRouter free tier has daily limits
 - **No streaming** — responses returned at once
 - **No re-ranking** — top-k from Qdrant directly
 - **No conversation memory** — each question is independent
